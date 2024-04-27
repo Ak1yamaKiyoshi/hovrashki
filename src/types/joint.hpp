@@ -14,6 +14,6 @@ struct joint {
 };
 
 std::ostream& operator<<(std::ostream& os, const joint& j) {
-    os << "joint("<< j.start << " <-> " << j.end << ")";
+    os << "joint(\n    "<< j.start << "\n    " << j.end << "\n  )";
     return os;
 }
