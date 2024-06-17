@@ -1,92 +1,71 @@
+import numpy as np
 import pygame
-from dataclasses import dataclass
-from typing import List, Tuple, Union
-import time
-import math
+
+from src.types import node2d, node2d_actions
+from src.utils.object_acounting import EventHandler, ObjectStore
+from src.events import event_quit
+
+
 pygame.init()
-from src.datatypes import vec2f, point
-from src.utils import vec_utils, point_utils, math_utils
 
+TARGET_FPS = 60
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
+DEFAULT_FILL_COLOR = (60, 60, 60)
+DAMPING = 0.95
 
-GRAVITY = 0
-DUMPING = 1 - 0.034
-MAX_VELOCITY = 100
+class Game:
+    def __init__(self):
+        self.window = None
+        self.event_handler  = None
+        self.setup()
+    
+    def setup_objects(self):
+        self.object_store.add(node2d)
+    
+    def setup_events(self):
+        self.event_handler.register_event(event_quit, pygame.QUIT)
+    
 
+    def setup_pygame(self):
+        self.window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        pygame.display.set_caption("")
+    
+    def setup_accounting(self):
+        self.event_handler = EventHandler()
+        self.object_store = ObjectStore()
+    
+    def setup(self):
+        self.setup_accounting()
+        self.setup_pygame()
+        self.setup_events()
+    
+    def update(self, dt):
+        for obj in self.object_store.get_objects():
+            if isinstance(obj, node2d):
+                node2d_actions.update(obj, DAMPING, dt)
+    
+    def draw(self):
+        pass
+    
+    def mainloop(self):
+        running = True
+        clock = pygame.time.Clock()
+        previous_time = pygame.time.get_ticks()
+        
+        while running:
+            self.event_handler.handle_events()
 
-# Initialize Pygame
-pygame.init()
-WINDOW_SIZE = (800, 600)
-screen = pygame.display.set_mode(WINDOW_SIZE)
-pygame.display.set_caption("Point Simulation")
-clock = pygame.time.Clock()
+            current_time = pygame.time.get_ticks()
+            delta_time = (current_time - previous_time) / 1000.0 
+            previous_time = current_time
 
-# Define colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-
-# Set up points
-p1 = point(vec2f(100+0, 100+0), vel=vec2f(-1, 1), mass=100.0)
-p2 = point(vec2f(100+10, 100+10), vel=vec2f(1, -1), mass=64.0)
-p3 = point(vec2f(100+10, 100+-10), vel=vec2f(0.1, -1), mass=85.0)
-p4 = point(vec2f(100+-10, 100+-50), vel=vec2f(5, -0.1), mass=95.0)
-
-
-point_utils.add_neighbour(p1, p2, repeling_force=[50.4], angle_range_rad=(-math.pi, math.pi))
-point_utils.add_neighbour(p2, p3, repeling_force=[50.4], angle_range_rad=(-math.pi, math.pi))
-point_utils.add_neighbour(p3, p4, repeling_force=[50.4], angle_range_rad=(-math.pi, math.pi))
-point_utils.add_neighbour(p4, p1, repeling_force=[50.4], angle_range_rad=(-math.pi, math.pi))
-
-points: List[point] = [p1, p2, p3, p4,]
-
-screen_width = 1900
-screen_height = 1000
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Points Simulation")
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-
-
-
-def draw_points(points: List[point]):
-    for p in points:
-        x, y = int(p.pos.x), int(p.pos.y)
-        color = (math_utils.clip(int(abs(p.vel.x/MAX_VELOCITY//5)*255), 50, 255), math_utils.clip(int(abs(p.vel.y/MAX_VELOCITY//5)*255), 50, 255), 150)
-        pygame.draw.circle(
-            screen, 
-            color,
-            (x, y), 
-            int(p.mass//10)
-        )
-
-
-clock = pygame.time.Clock()
-running = True
-while running:
-    clock.tick(144)  
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEMOTION:
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            vec = vec_utils.direction(p1.pos, vec2f(float(mouse_x), float(mouse_y))) * 40.0
-            point_utils.apply_vector(p1, vec)
-
-    # Clear the screen
-    screen.fill(BLACK)
-
-    # Update point positions
-    point_utils.apply_vector_to_array(points, vec2f(y=GRAVITY))
-    point_utils.tight_point_structure(p1, power=30.0)
-    point_utils.multiply_vector_array(points, vec2f(DUMPING, DUMPING))
-    point_utils.apply_velocity_to_array(points, 1/90, max_velocity=MAX_VELOCITY)
-
-
-    draw_points(points)
-
-    pygame.display.flip()
-
-# Quit Pygame
-pygame.quit()
+            self.update(delta_time)
+            self.window.fill(DEFAULT_FILL_COLOR)
+            self.draw()
+            
+            pygame.display.flip()
+            clock.tick(TARGET_FPS) 
+        pygame.quit()
+        
+Game().mainloop()
