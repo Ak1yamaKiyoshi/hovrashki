@@ -1,24 +1,23 @@
 
 
-## Дані та логіка
-Дані та їх використання повинні бути відділені. 
-Тобто, умовно, точка повинна містити у собі лише дані
-І ніяких функцій накшталт *перемістити точку до гравця
+### file structure: 
+```
+src/events: # global events
+src/types: 
+  type:
+  - events
+  - actions 
+  - type
 
-
-```py
-@dataclass
-class point:
-  pos: Tuple[float, float]
-  vel: Tuple[float, float]
-
-
-class point_actions:
-    @staticmethod
-    def move_point(p: point, x:float, y:float):
-        p.pos[0] = x
-        p.pos[1] = y
+utils:
+  accounting: # event and object handlers 
 ```
 
-## Об'єкти
-Вирішуватиметься це
+### game class anatomy:
+```
+Game: 
+- setup - use setup handler 
+- update - use update handler 
+- events - use event handler 
+- draw - use draw handler 
+```

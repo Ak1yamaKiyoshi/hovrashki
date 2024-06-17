@@ -25,10 +25,14 @@ class EventHandler:
             del self._events_to_handle[event_id]
 
     def handle_events(self):
+        for event_handler, event_type in self._events_to_handle.values():
+            if event_type == -1:
+                event_handler(None)
         for event in pygame.event.get():
             for event_handler, event_type in self._events_to_handle.values():
                 if event.type == event_type:
-                    event_handler()
+                    event_handler(event)
+            
             if event.type == pygame.QUIT:
                 running = False
                 break

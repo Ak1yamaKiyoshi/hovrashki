@@ -1,19 +1,15 @@
 import numpy as np
 import pygame
 
-from src.types import node2d, node2d_actions
-from src.utils.object_acounting import EventHandler, ObjectStore
+from src.types import node2d, node2d_actions, controllable_events, controllable, controllable_actions
+from src.utils.object_acounting import EventHandler, ObjectStore, IdGenerator
 from src.events import event_quit
+
+from config import *
+
 
 
 pygame.init()
-
-TARGET_FPS = 60
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
-DEFAULT_FILL_COLOR = (60, 60, 60)
-DAMPING = 0.95
-
 class Game:
     def __init__(self):
         self.window = None
@@ -21,32 +17,36 @@ class Game:
         self.setup()
     
     def setup_objects(self):
-        self.object_store.add(node2d)
+        self.object_store.add(controllable(self.id_generator()))
     
     def setup_events(self):
         self.event_handler.register_event(event_quit, pygame.QUIT)
-    
+        self.event_handler.register_event(controllable_events.move, -1)
 
     def setup_pygame(self):
         self.window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption("")
     
     def setup_accounting(self):
+        self.id_generator = IdGenerator()
         self.event_handler = EventHandler()
         self.object_store = ObjectStore()
     
     def setup(self):
-        self.setup_accounting()
         self.setup_pygame()
+        self.setup_accounting()
         self.setup_events()
+        self.setup_objects()
     
     def update(self, dt):
         for obj in self.object_store.get_objects():
-            if isinstance(obj, node2d):
-                node2d_actions.update(obj, DAMPING, dt)
-    
+            if type(obj) == controllable:
+                controllable_actions.update(obj, DAMPING, dt)
+
     def draw(self):
-        pass
+        for obj in self.object_store.get_objects():
+            if type(obj) == controllable:
+                controllable_actions.draw(obj, self.window)
     
     def mainloop(self):
         running = True
@@ -68,4 +68,5 @@ class Game:
             clock.tick(TARGET_FPS) 
         pygame.quit()
         
-Game().mainloop()
+if __name__ == "__main__":
+    Game().mainloop()
